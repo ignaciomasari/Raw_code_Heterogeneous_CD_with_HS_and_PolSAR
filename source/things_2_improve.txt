@@ -1,4 +1,1 @@
-Remove deprecated functions
-Change TF version (major changes)
-Change .mat for .npy
-Change dataset options
+

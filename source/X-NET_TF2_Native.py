@@ -23,7 +23,6 @@ from tensorflow.keras.layers import Activation, Conv2D, Dropout, LeakyReLU
 from skimage.measure import block_reduce
 from scipy.ndimage import zoom
 import argparse
-import math
 import pydensecrf.densecrf as dcrf
 from pydensecrf.utils import create_pairwise_bilateral
 from pydensecrf.utils import create_pairwise_gaussian
@@ -49,9 +48,9 @@ BATCH_SIZE = 10
 PATCH_SIZE = 100
 
 
-PATCH_SIZE_AFF = 40
+PATCH_SIZE_AFF = 20
 PATCH_STRIDE_AFF = PATCH_SIZE_AFF // 4
-BATCH_SIZE_AFF = 50
+BATCH_SIZE_AFF = 100
 ZERO_PAD = 0
 AFFINITY_RESOLUTIONS = 3
 
@@ -177,7 +176,7 @@ class cross_network(object):
             res.append(padded_array)
         return np.array(res)
 
-    def save_image(self, array, subfolder):
+    def save_image(self, array, subfolder, is_tiff=False):
         img = Image.fromarray(array.astype("uint8"))
         if subfolder.find("Aff") != -1 or subfolder.find("d") != -1:
             img = ImageOps.equalize(img, mask=None)
@@ -295,12 +294,13 @@ class cross_network(object):
         return aff
 
     def train_model(self):
-        prior_path = "././data/" + NAME_DATASET[DATASET] + "/change-prior_aff_40.mat"
-        prior_name = "aff"# + str(self.t1.shape[0]) + str(self.t1.shape[1])
+        prior_path = "././data/" + NAME_DATASET[DATASET] + "/change-prior.npy"
+        # prior_name = "aff"# + str(self.t1.shape[0]) + str(self.t1.shape[1])
         try:
             if PRE_TRAIN:
                 raise Exception("Forcing prior computation")
-            self.Alpha = np.squeeze(scipy.io.loadmat(prior_path)[prior_name])
+            # self.Alpha = np.squeeze(scipy.io.loadmat(prior_path)[prior_name])
+            self.Alpha = np.squeeze(np.load(prior_path))
             if np.isnan(self.Alpha).any():
                 print("Nan found in affinity")
                 self.Alpha[np.isnan(self.Alpha)] = 1
@@ -311,7 +311,8 @@ class cross_network(object):
             if np.isnan(self.Alpha).any():
                 print("Nan found in affinity")
                 self.Alpha[np.isnan(self.Alpha)] = 1
-            scipy.io.savemat(prior_path, {"aff": self.Alpha})
+            np.save(prior_path, self.Alpha)    
+            # scipy.io.savemat(prior_path, {"aff": self.Alpha})
             
         self.save_image(255.0 * self.Alpha, "alpha.png")
 
@@ -500,15 +501,23 @@ def normalize(image):
 
 def run_model():
     if DATASET == 0:
-        mat = scipy.io.loadmat("././data/Danubio/CSKS2_GTC_B_HI_0B_HH_RD_SF_20200908_clipped_resamp_pp.mat")
-        t1 = np.array(mat["CSK"], dtype=float)
-        t1 = np.expand_dims(t1.squeeze(),-1)
-        mat2 = scipy.io.loadmat("././data/Danubio/PRISMA_9ch_pp.mat")
-        t2 = np.array(mat2["PRISMA"], dtype=float)
+        # mat = scipy.io.loadmat("././data/Danubio/CSKS2_GTC_B_HI_0B_HH_RD_SF_20200908_clipped_resamp_pp.mat")
+        # t1 = np.array(mat["CSK"], dtype=float)
+        # t1 = np.expand_dims(t1.squeeze(),-1)
+        # mat2 = scipy.io.loadmat("././data/Danubio/PRISMA_9ch_pp.mat")
+        # t2 = np.array(mat2["PRISMA"], dtype=float)
+
+        # Input images in .npy format
+        t1 = np.load("././data/Danubio/CSKS2_GTC_B_HI_0B_HH_RD_SF_20200908_clipped_resamp_pp.npy")
+        t2 = np.load("././data/Danubio/PRISMA_9ch_pp.npy")
     else:
         print("Wrong data set")
         exit()
-    del mat
+    # del mat
+
+    if t1.shape[2]!=nc1 or t2.shape[2]!=nc2:
+        raise Exception("Error in the number of channels")
+
     time1 = time.time()
     cross_net = cross_network(t1, t2)
     cross_net.train_model()
