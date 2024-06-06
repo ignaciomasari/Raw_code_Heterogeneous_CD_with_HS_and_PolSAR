@@ -1,2 +1,2 @@
-# Heterogeneous_CD_with_HS_and_PolSAR
-Code corresponding to the paper Heterogeneous Change Detection with Hyperspectral PRISMA data and SAR Cosmo-Sky Med Imagery
+# Heterogeneous_CD_for PRISMA and COSMO-SkyMed imagery 
+Pre- and post-processing Code corresponding to the project on Heterogeneous Change Detection with Hyperspectral PRISMA data and SAR Cosmo-SkyMed Imagery.
