@@ -2,5 +2,5 @@ data/
 logs/
 models/
 Results/
-HetCD/
+source/_pycache_/
 Emilia_Romagna_results.xlsx
