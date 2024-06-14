@@ -3,4 +3,5 @@ logs/
 models/
 Results/
 source/_pycache_/
+umap/_pycache_/
 Emilia_Romagna_results.xlsx
